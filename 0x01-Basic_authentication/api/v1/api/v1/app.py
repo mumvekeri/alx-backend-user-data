@@ -23,20 +23,23 @@ def not_found(error) -> str:
 
 
 @app.before_request
-def before_request_handler():
-    """Before request handler"""
-    excluded_paths = ['/api/v1/status/', '/api/v1/unauthorized/', '/api/v1/forbidden/']
+def bef_req():
+    """
+    Filter each request before it's handled by the proper route
+    """
     if auth is None:
-        return
-    if request.path in excluded_paths or not auth.require_auth(request.path, excluded_paths):
-        return
-
-    if auth.authorization_header(request) is None:
-        abort(401)
-
-    if auth.current_user(request) is None:
-        abort(403)
-
+        pass
+    else:
+        excluded = [
+            '/api/v1/status/',
+            '/api/v1/unauthorized/',
+            '/api/v1/forbidden/'
+        ]
+        if auth.require_auth(request.path, excluded):
+            if auth.authorization_header(request) is None:
+                abort(401, description="Unauthorized")
+            if auth.current_user(request) is None:
+                abort(403, description="Forbidden")
 
 if __name__ == "__main__":
     host = getenv("API_HOST", "0.0.0.0")
